@@ -1658,7 +1658,7 @@ class ModelBase extends ClassBase {
 	 * @see ModelBase::select
 	 *
 	 */
-	final public static function readSingle($where_condition = null, $order_key_direction = array(), $joins = array(), &$model_object = null) {
+	final public static function readSingle($where_condition = null, $order_key_direction = array(), $joins = array(), ?ModelBase &$model_object = null) {
 
 		if ($model_object === null) {
 			$class_name = static::class;
@@ -1671,6 +1671,21 @@ class ModelBase extends ClassBase {
 			$model_object->initialize($record);
 		} else {
 			$model_object = null;
+		}
+
+		return $model_object;
+	}
+
+	final public static function readySingle(array $where_condition = null, $order_key_direction = array(), $joins = array(), &$model_object = null) {
+
+		$model_object = static::readSingle($where_condition, $order_key_direction, $joins);
+
+		if ($model_object === null) {
+			$class = static::class;
+			$model_object = new $class();
+			foreach ($where_condition as $key => $val) {
+				$model_object->{$key} = $val;
+			}
 		}
 
 		return $model_object;
