@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection ALL */
 
 // TODO: Bei SQL-Geschichten preparedStatements verwenden ...
 // TODO: ModelDatabase - Ableitung von ModelBase definieren und dort das Tabellen-Handling unterbringen ...
@@ -33,7 +33,7 @@ use PDOException;
  */
 class ModelBase extends ClassBase {
 
-	private static string $cacheFilePath;
+	public static string $cacheFilePath;
 
 	/**
 	 * Property-Konstanten: Um alternative Zugriffe zu ermöglichen, sollte für jedes Property, das im einleitenden Klassen-Header definiert wird, auch eine Konstante definiert werden. Dann kann nämlich auch per get() und set() ein Zugriff erfolgen ... zusätzlich erleichert die Verwendung von Konstanten die spätere Suche mittels "Find Usages".
@@ -672,7 +672,7 @@ class ModelBase extends ClassBase {
 	 */
 	private static function initModelTableInfos() {
 
-		if (self::$modelTableInfos === null) {
+		if (self::$modelTableInfos === null || !file_exists(self::$cacheFilePath)) {
 			self::$modelTableInfos = ModelTableInfos::init(self::$cacheFilePath);
 		}
 

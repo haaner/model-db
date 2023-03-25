@@ -12,16 +12,16 @@ class ModelTableInfos {
 	/**
 	 * @var string
 	 */
-	private $cacheFilePath;
+	private string $cacheFilePath;
 
 	/**
 	 * Enthält die Tabellennamen der abgebildeten Tabellen
 	 *
 	 * Die Array-Keys entsprechen dem Namen der jeweiligen Klasse
 	 *
-	 * @var array
+	 * @var string[]
 	 */
-	private $tableNames;
+	private array $tableNames;
 
 	/**
 	 * Enthält die Tabellenfelder der abgebildeten Tabellen
@@ -29,69 +29,69 @@ class ModelTableInfos {
 	 * Die Array-Keys entsprechen dem Namen der jeweiligen Klasse - die Values sind wiederum Arrays, deren Keys den Feldbezeichnern
 	 * der jeweiligen Tabelle entsprechen und deren Values den zugehörigen MySQL-Typ enthalten.
 	 *
-	 * @var array
+	 * @var string[]
 	 */
-	private $tableFields;
+	private array $tableFields;
 
 	/**
 	 * Enthält die Indizes der abgebildeten Tabellen
 	 *
 	 * Die Array-Keys entsprechen dem Namen der jeweiligen Klasse - die Values sind wiederum Arrays, deren Keys den Indexbezeichnern entsprechen und deren Values die zugehörigen Feldnamen enthalten.
 	 *
-	 * @var array
+	 * @var string[]
 	 */
-	private $tableIndices;
+	private array $tableIndices;
 
 	/**
 	 * In der Datenbank hinterlegte Default-Werte zu den Tabellenspalten.
 	 *
-	 * @var array Aufbau analog wie $tableFields
+	 * @var string[] Aufbau analog wie $tableFields
 	 */
-	private $fieldDefaults;
+	private array $fieldDefaults;
 
 	/**
 	 * Enthält die Pflichtfelder der abgebildeten Tabellen
 	 *
-	 * @var array Aufbau analog wie $tableFields
+	 * @var string[] Aufbau analog wie $tableFields
 	 */
-	private $mandatoryFields;
+	private array $mandatoryFields;
 
 	/**
 	 * Enthält die Fremdschlüssel der abgebildeten Tabellen
 	 *
-	 * @var array Aufbau analog wie $tableFields
+	 * @var string[] Aufbau analog wie $tableFields
 	 */
-	private $foreignKeyClassOrTable;
+	private array $foreignKeyClassOrTable;
 
 	/**
 	 * Enthält die (nicht-statischen) Property-Bezeichner aller abgebildeter Klassen
 	 *
 	 * Die Array-Keys entsprechen dem Tabellennamen - die Values sind wiederum Arrays, deren Keys den Property-Bezeichnern der jeweiligen Objektklasse entsprechen und deren Values den zugehörigen \Type enthalten.
 	 *
-	 * @var array
+	 * @var string[]
 	 */
-	private $reflectedProperties;
+	private array $reflectedProperties;
 
 	/**
 	 * In der Datenbank hinterlegte Enumerations-Werte für die als ENUM gekennzeichneten Tabellenspalten
 	 *
-	 * @var array
+	 * @var string[]
 	 */
-	private $fieldEnumValues;
+	private array $fieldEnumValues;
 
 	/**
 	 * Enthält die Primärschlüssel der abgebildeten Tabellen
 	 *
-	 * @var array Aufbau analog wie $tableFields
+	 * @var string[] Aufbau analog wie $tableFields
 	 */
-	private $primaryKeyList;
+	private array $primaryKeyList;
 
 	/**
 	 * Enthält den Bezeichner der AUTO_INCREMENT-Spalte der abgebildeten Tabellen
 	 *
-	 * @var array Aufbau analog wie $tableFields
+	 * @var string[] Aufbau analog wie $tableFields
 	 */
-	private $autoincrementField;
+	private array $autoincrementField;
 
 	private function __construct(string $cache_file_path) {
 		$this->cacheFilePath = $cache_file_path;
@@ -261,7 +261,7 @@ class ModelTableInfos {
 
 				$field_defaults[$key] = $record['Default'];
 
-				if (preg_match('/^enum/', $table_fields[$key])) {
+				if (str_starts_with($table_fields[$key], 'enum')) {
 					$field_enums_values[$key] = explode(',', str_replace('enum(', '', $table_fields[$key]));
 					foreach ($field_enums_values[$key] as &$value) {
 						$value = trim($value, "')");
@@ -291,7 +291,7 @@ class ModelTableInfos {
 				$table_indices[$index][] = $record['Column_name'];
 			}
 
-		} catch (PDOException $ex) { }
+		} catch (PDOException) { }
 
 		// Fremdschlüssel - Felder bestimmen
 		$foreign_key_class_or_table = &$this->foreignKeyClassOrTable[$class_name];
@@ -319,7 +319,7 @@ class ModelTableInfos {
 				$class_comment = '';
 			}
 
-		} catch (ReflectionException $ex) {
+		} catch (ReflectionException) {
 			$class_comment = '';
 		}
 
@@ -331,7 +331,7 @@ class ModelTableInfos {
 				// Das Foreign-Key Handling macht nur dann Sinn, wenn die beteiligte Tabelle einer anderen ModelBase-Klasse entspricht
 
 				// Foreign-Klassen (deren Type-Hint keinen Namespace enthält) müssen im Models-Namespace sein
-				if (strpos($foreign_class_name, '\\') === false) {
+				if (!str_contains($foreign_class_name, '\\')) {
 					$foreign_class_name = 'Models\\' . $foreign_class_name;
 				}
 
@@ -353,7 +353,7 @@ class ModelTableInfos {
 						$type = ModelBase::getTypeForSqlDefinition($table_fields[$field]);
 					}
 
-				} elseif (preg_match('/^longtext/', $table_fields[$field])) { // MariaDB verwendet LONGTEXT anstatt JSON, deshalb muss bei einem derartigem Datentyp die Annotation näher inspiziert werden
+				} elseif (str_starts_with($table_fields[$field], 'longtext')) { // MariaDB verwendet LONGTEXT anstatt JSON, deshalb muss bei einem derartigem Datentyp die Annotation näher inspiziert werden
 
 					if (($type = ModelBase::getTypeForAnnotation($class_comment, $field)) !== ModelBase::PROPERTY_TYPE_JSON) {
 						$type = ModelBase::getTypeForSqlDefinition($table_fields[$field]);

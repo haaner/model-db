@@ -8,6 +8,7 @@ use PDOException;
 use PDOStatement;
 
 defined('DB_DSN') || die('Please define DB_DSN before using ' . __FILE__);
+@define('DB_DSN', ''); // The IDE should still be able to resolve the variable
 
 class Db {
 
@@ -158,6 +159,10 @@ class Db {
 		$this->connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, self::EMULATE_PREPARES); // Zurück zum ursprünglichen Emulations-Setting
 	}
 
+	public static function tableExists(string $table_name) {
+		return self::$atomicInstance->queryValue("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_NAME = '". $table_name . "'") === $table_name;
+	}
+
 	/**
 	 * Datenbankabfrage durchführen
 	 *
@@ -185,16 +190,20 @@ class Db {
 	 *
 	 * @param string $query
 	 *
-	 * @return string
+	 * @return string|null
 	 * @throws PDOException
 	 */
-	public static function queryValue(string $query): string {
+	public static function queryValue(string $query): ?string {
 		if (stripos($query, ' LIMIT ') === false) {
 			$query .= ' LIMIT 1';
 		}
 
 		Db::$atomicInstance->query($query);
 		$record = Db::$atomicInstance->nextRecord();
+
+		if ($record === false) {
+			return null;
+		}
 
 		return array_values($record)[0];
 	}

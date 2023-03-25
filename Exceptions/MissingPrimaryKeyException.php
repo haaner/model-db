@@ -11,4 +11,4 @@ class MissingPrimaryKeyException extends GeneralException {
 		}
 		parent::__construct($message, $code, $previous);
 	}
-};
+}
