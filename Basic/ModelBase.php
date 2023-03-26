@@ -344,19 +344,17 @@ class ModelBase extends ClassBase {
 	/**
 	 * Initialisiert ein Model mittels des übergebenen Key-Value Arrays.
 	 *
-	 * WICHTIG: Sämtliche Member-Variable des Objekts, die explizit angelegt wurden (also nicht mithilfe der property-Syntax im Klassenkopf), müssen innerhalb dieser bzw. einer überschreibenden Funktion explizit initialisiert werden und NICHT bereits beim Anlegen (also nicht via "private|protected|public $xy = false"), anderfalls wird die @param array $key_value Initialisierungs-Array mit Key-Value Paaren. Die Keys entsprechen Property-Bezeichnern - die Values beinhalten die zuzuweisenden Werte.
-	 * @see ModelBase::reset() - Funktion für diese Variable nicht sauber funktionieren!
+	 * WICHTIG: Sämtliche Member-Variable des Objekts, die explizit angelegt wurden (also nicht mithilfe der property-Syntax im Klassenkopf), müssen innerhalb dieser bzw. einer überschreibenden Funktion explizit initialisiert werden und NICHT bereits beim Anlegen (also nicht via "private|protected|public $xy = false"), anderfalls wird {@see ModelBase::reset()} für diese Variable nicht sauber funktionieren!
 	 *
+	 * @param array $key_value Initialisierungs-Array mit Key-Value Paaren. Die Keys entsprechen Property-Bezeichnern - die Values beinhalten die zuzuweisenden Werte.
 	 */
 	protected function initialize($key_value = array()) {
 
-		try {
+		//try {
 			foreach ($key_value as $key => $value) {
 				$this->internalSet($key, $value);
 			}
-
-		} catch (PropertyException $ex) {
-		}
+		//} catch (PropertyException) { }
 
 		$this->initFieldValueBackup();
 	}
@@ -735,6 +733,8 @@ class ModelBase extends ClassBase {
 			// Die privaten ModelBase - Properties auslassen ...
 			$ignore_properties = array('fieldValues', 'initialFieldValues', 'tableName');
 			$property_defaults = array();
+
+			$this->initialize();
 
 			foreach ($keys as $key) {
 				if (!in_array($key, $ignore_properties)) {
