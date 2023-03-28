@@ -332,7 +332,7 @@ class ModelTableInfos {
 
 				// Foreign-Klassen (deren Type-Hint keinen Namespace enthält) müssen im Models-Namespace sein
 				if (!str_contains($foreign_class_name, '\\')) {
-					$foreign_class_name = ModelBase::classSpace() . '\\' . $foreign_class_name;
+					$foreign_class_name = PROJECT_NAME . '\\Models\\' . $foreign_class_name;
 				}
 
 				if (is_subclass_of($foreign_class_name, ModelBase::class) && ($foreign_class_name)::getTableName() === $foreign_key_class_or_table[$field]) {
