@@ -1257,6 +1257,10 @@ class ModelBase extends ClassBase {
 	 */
 	public function toArray($ignore_keys = array()) {
 
+		foreach ($this->fieldValues as $key => $val) {
+			$this->{$key}; // bewirkt, das Fremdschlüssel-Referenzen via Magic-Getter-Systematik aufgelöst werden
+		}
+
 		$ignore_keys = array_merge($ignore_keys, array('initialFieldValues', 'tableName'));
 		$raw = Utils::object2Array($this, $ignore_keys, false);
 
@@ -1268,7 +1272,6 @@ class ModelBase extends ClassBase {
 
 		return $arr;
 	}
-
 
 	/**
 	 * Gibt eine einfache String-Repräsentation des Objekts zurück und wird u.a. für die Fremdschlüssel-Verknüpfung via Web-Interface verwendet)
