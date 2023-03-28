@@ -2,12 +2,11 @@
 
 namespace BirdWorX\ModelDb\Basic;
 
+use BirdWorX\ModelDb\Exceptions\DateTimeException;
 use DateInterval;
 use DateTime;
 use DateTimeZone;
 use Exception;
-use BirdWorX\ModelDb\Exceptions\DateTimeException;
-use JetBrains\PhpStorm\ArrayShape;
 
 /**
  * Class LocalDateTime

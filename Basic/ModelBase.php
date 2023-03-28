@@ -1,4 +1,4 @@
-<?php /** @noinspection ALL */
+<?php
 
 // TODO: Bei SQL-Geschichten preparedStatements verwenden ...
 // TODO: ModelDatabase - Ableitung von ModelBase definieren und dort das Tabellen-Handling unterbringen ...
@@ -1258,6 +1258,7 @@ class ModelBase extends ClassBase {
 	public function toArray($ignore_keys = array()) {
 
 		foreach ($this->fieldValues as $key => $val) {
+			/** @noinspection PhpExpressionResultUnusedInspection */
 			$this->{$key}; // bewirkt, das Fremdschlüssel-Referenzen via Magic-Getter-Systematik aufgelöst werden
 		}
 
