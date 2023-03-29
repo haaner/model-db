@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpMissingParamTypeInspection */
+/** @noinspection PhpMissingFieldTypeInspection */
 
 // TODO: Bei SQL-Geschichten preparedStatements verwenden ...
 // TODO: ModelDatabase - Ableitung von ModelBase definieren und dort das Tabellen-Handling unterbringen ...
@@ -27,7 +28,7 @@ use PDOException;
  *
  * Definiert eine 1:1 Abbildung auf eine Tabelle, deren Name dem Klassennamen in underscore-Schreibweise entspricht
  *
- * @property int|null id Id des Datensatzes
+ * @property int|string|null id Id des Datensatzes
  * @property LocalDateTime created Zeitpunkt der Erstellung des Datensatzes
  * @property LocalDateTime updated Letzte Änderung des Datensatzes
  */
@@ -167,17 +168,17 @@ class ModelBase extends ClassBase {
 	 */
 	public static function getType(?string $type_string): int {
 
-		if (preg_match('/^int/', $type_string)) {
+		if (str_starts_with($type_string, 'int')) {
 			$type = self::PROPERTY_TYPE_INT;
-		} elseif (preg_match('/^bool/', $type_string)) {
+		} elseif (str_starts_with($type_string, 'bool')) {
 			$type = self::PROPERTY_TYPE_BOOL;
-		} elseif (preg_match('/^string/', $type_string)) {
+		} elseif (str_starts_with($type_string, 'string')) {
 			$type = self::PROPERTY_TYPE_STRING;
-		} elseif (preg_match('/^float/', $type_string)) {
+		} elseif (str_starts_with($type_string, 'float')) {
 			$type = self::PROPERTY_TYPE_FLOAT;
-		} elseif (preg_match('/Date/', $type_string)) {
+		} elseif (str_contains($type_string, 'Date')) {
 			$type = self::PROPERTY_TYPE_DATETIME;
-		} elseif (preg_match('/^array/', $type_string)) {
+		} elseif (str_starts_with($type_string, 'array')) {
 			$type = self::PROPERTY_TYPE_JSON;
 		} else {
 			$type = self::PROPERTY_TYPE_NONE;
@@ -209,9 +210,9 @@ class ModelBase extends ClassBase {
 
 		if (preg_match('/^(tiny|small|medium|big)?int/', $sql_definition)) {
 			$type = self::PROPERTY_TYPE_INT;
-		} elseif (preg_match('/^enum/', $sql_definition)) {
+		} elseif (str_starts_with($sql_definition, 'enum')) {
 			$type = self::PROPERTY_TYPE_ENUM;
-		} elseif (preg_match('/^tinytext/', $sql_definition)) {
+		} elseif (str_starts_with($sql_definition, 'tinytext')) {
 			$type = self::PROPERTY_TYPE_STRING;
 		} elseif (preg_match('/^(var)?char/', $sql_definition)) {
 			if (preg_match('/\((.*)\)/', $sql_definition, $matches)) {
@@ -225,15 +226,15 @@ class ModelBase extends ClassBase {
 			}
 		} elseif (preg_match('/^(medium|long)?text/', $sql_definition)) {
 			$type = self::PROPERTY_TYPE_TEXT;
-		} elseif (preg_match('/^float/', $sql_definition) || preg_match('/^double/', $sql_definition) || preg_match('/^decimal/', $sql_definition)) {
+		} elseif (str_starts_with($sql_definition, 'float') || str_starts_with($sql_definition, 'double') || str_starts_with($sql_definition, 'decimal')) {
 			$type = self::PROPERTY_TYPE_FLOAT;
-		} elseif (preg_match('/^bool/', $sql_definition)) {
+		} elseif (str_starts_with($sql_definition, 'bool')) {
 			$type = self::PROPERTY_TYPE_BOOL;
-		} elseif (preg_match('/^datetime/', $sql_definition)) {
+		} elseif (str_starts_with($sql_definition, 'datetime')) {
 			$type = self::PROPERTY_TYPE_DATETIME;
-		} elseif (preg_match('/^date/', $sql_definition)) {
+		} elseif (str_starts_with($sql_definition, 'date')) {
 			$type = ModelBase::PROPERTY_TYPE_DATE;
-		} elseif (preg_match('/^json/', $sql_definition)) {
+		} elseif (str_starts_with($sql_definition, 'json')) {
 			$type = self::PROPERTY_TYPE_JSON;
 		} else {
 			$type = self::PROPERTY_TYPE_STRING;
@@ -273,7 +274,7 @@ class ModelBase extends ClassBase {
 				$prop_val = new LocalDateTime();
 				$prop_val->setDateTime($value);
 
-			} elseif (substr($value, 0, 10) == '0000-00-00') {
+			} elseif (str_starts_with($value, '0000-00-00')) {
 				$prop_val = null;
 			} else {
 				if ($type == self::PROPERTY_TYPE_DATETIME) {
@@ -286,10 +287,10 @@ class ModelBase extends ClassBase {
 					$prop_val = new LocalDateTime($value, $format);
 
 					if ($type == ModelBase::PROPERTY_TYPE_DATE) {
-						$prop_val->setTime(0, 0, 0);
+						$prop_val->setTime(0, 0);
 					}
 
-				} catch (DateTimeException $ex) {
+				} catch (DateTimeException) {
 					$prop_val = null;
 				}
 			}
@@ -322,10 +323,11 @@ class ModelBase extends ClassBase {
 	/**
 	 * ModelBase Konstruktor
 	 *
-	 * @param int $id
-	 * @param array $key_value Initialisierungs-Array mit Key-Value Paaren. Die Keys entsprechen Property-Bezeichnern - die Values beinhalten die zuzuweisenden Werte.
+	 * @param int|string|null $id
+	 *
+	 * @noinspection PhpDocMissingThrowsInspection
 	 */
-	final public function __construct($id = 0, $key_value = array()) {
+	final public function __construct(int|string|null $id = null) {
 
 		static::initModelTableInfos();
 
@@ -334,10 +336,10 @@ class ModelBase extends ClassBase {
 		// Die Default-Werte aller Properties hinterlegen
 		$this->initPropertyDefaults();
 
-		if (($id = intval($id))) {
+		if (($id = trim(strval($id))) !== '') {
 			$this->read([static::ID => $id], true);
 		} else {
-			$this->initialize($key_value);
+			$this->initialize();
 		}
 	}
 
@@ -347,6 +349,8 @@ class ModelBase extends ClassBase {
 	 * WICHTIG: Sämtliche Member-Variable des Objekts, die explizit angelegt wurden (also nicht mithilfe der property-Syntax im Klassenkopf), müssen innerhalb dieser bzw. einer überschreibenden Funktion explizit initialisiert werden und NICHT bereits beim Anlegen (also nicht via "private|protected|public $xy = false"), anderfalls wird {@see ModelBase::reset()} für diese Variable nicht sauber funktionieren!
 	 *
 	 * @param array $key_value Initialisierungs-Array mit Key-Value Paaren. Die Keys entsprechen Property-Bezeichnern - die Values beinhalten die zuzuweisenden Werte.
+	 *
+	 * @throws PropertyException
 	 */
 	protected function initialize($key_value = array()) {
 
@@ -400,6 +404,8 @@ class ModelBase extends ClassBase {
 	 * @param bool $foreign_key_as_model Wenn FALSE, werden Fremd-Schlüssel Properties nicht automatisch als fertig-initialisierte Objekte zurückgegeben, allerdings nur insofern ein solches Objekt nicht bereits zuvor angelegt wurde
 	 *
 	 * @return mixed|string
+	 *
+	 * @throws PropertyException
 	 */
 	private function &getProperty($property_key, $is_internal = true, $foreign_key_as_model = true) {
 
@@ -580,6 +586,7 @@ class ModelBase extends ClassBase {
 	 *
 	 * @return array
 	 *
+	 * @noinspection PhpDocMissingThrowsInspection
 	 */
 	public function getPropertyStrings($only_table_properties = false) {
 
@@ -630,6 +637,8 @@ class ModelBase extends ClassBase {
 	 *
 	 * @param string $property_key
 	 * @param bool $write_model Wenn TRUE, wird das Model nach dem Löschvorgang direkt gespeichert
+	 *
+	 * @throws PropertyException
 	 */
 	final public function deleteUpload(string $property_key, bool $write_model = false) {
 		if (($path_url = $this->getUploadPathUrl()) !== null) {
@@ -930,6 +939,8 @@ class ModelBase extends ClassBase {
 	 * bzw. seit der Erstellung des Objekts geändert haben.
 	 *
 	 * @return array
+	 *
+	 * @noinspection PhpDocMissingThrowsInspection
 	 */
 	public function getFieldsChanged() {
 		$changed_fields = array();
@@ -972,7 +983,7 @@ class ModelBase extends ClassBase {
 		$ignore_keys[] = self::UPDATED;
 
 		// Hash aus den Daten generieren
-		$property_strings = $this->getPropertyStrings(false);
+		$property_strings = $this->getPropertyStrings();
 		foreach ($ignore_keys as $ignore_key) {
 			unset($property_strings[$ignore_key]);
 		}
@@ -1015,7 +1026,7 @@ class ModelBase extends ClassBase {
 		foreach ($model_data as $key => $value) {
 			try {
 				$model->internalSet($key, $value);
-			} catch (PropertyException $ex) {
+			} catch (PropertyException) {
 			}
 		}
 
@@ -1028,8 +1039,10 @@ class ModelBase extends ClassBase {
 	 * @param array $model_data
 	 *
 	 * @return int
+	 *
+	 * @throws PropertyException
 	 */
-	public static function create($model_data = array()) {
+	public static function create($model_data = array()): int {
 
 		$model = static::createObject($model_data);
 		$model->write();
@@ -1082,6 +1095,8 @@ class ModelBase extends ClassBase {
 	 * Generiert einen SQL-Vergleichsstring, der den zum Model gehörigen Tabellen-Datensatz eindeutig identifiziert.
 	 *
 	 * @return array Es wird ein zwei-elementiges Array zurückgegeben - das erste Elemente enthält ein Array mit sämtlichen Key-Value Paaren, die innerhalb des zweiten Elements zu einer SqlCondition zusammengefügt wurden.
+	 *
+	 * @noinspection PhpDocMissingThrowsInspection
 	 */
 	private function getPrimaryTupleAndSqlCondition() {
 
@@ -1155,7 +1170,7 @@ class ModelBase extends ClassBase {
 				$auto_inc = intval($record['auto_inc']) + 1;
 				try {
 					$db->query(' ALTER TABLE ' . $tablename . ' AUTO_INCREMENT = ' . $auto_inc);
-				} catch (PDOException $ex) {
+				} catch (PDOException) {
 				} // Das Kommando kann Probleme machen, wenn Default-Values mancher Spalten nicht korrekt sind, etwa '0000-00-00' ... :(
 			}
 		}
@@ -1183,7 +1198,7 @@ class ModelBase extends ClassBase {
 				try {
 					static::truncate();
 					return;
-				} catch (PDOException $ex) {
+				} catch (PDOException) {
 				}
 			}
 
@@ -1216,7 +1231,7 @@ class ModelBase extends ClassBase {
 						$model->set($key, $value);
 						$model->write(true);
 					}
-				} catch (Exception $ex) {
+				} catch (Exception) {
 					if (!$ignore_errors) {
 						break;
 					}
@@ -1435,6 +1450,7 @@ class ModelBase extends ClassBase {
 	 * @param bool $check_mandatory Wenn TRUE, wird ein null-Wert nur dann erlaubt, wenn es sich um kein Pflichtfeld handelt
 	 * @see ModelBase::internalSet
 	 *
+	 * @throws PropertyException
 	 */
 	public function set($key, $value, $check_mandatory = true) {
 
@@ -1495,7 +1511,7 @@ class ModelBase extends ClassBase {
 		} elseif ($fieldname instanceof PrefixedField) {
 			$aliased_field = $fieldname->aliasedName();
 		} else {
-			$aliased_field = ((strpos($fieldname, '.') === false) ? self::DEFAULT_ALIAS . '.' : '') . $fieldname;
+			$aliased_field = ((!str_contains($fieldname, '.')) ? self::DEFAULT_ALIAS . '.' : '') . $fieldname;
 		}
 
 		return $aliased_field;
@@ -1639,11 +1655,12 @@ class ModelBase extends ClassBase {
 
 		$models = array();
 
-		$db = static::select($where_condition, $order_key_direction, $limit, $offset, $joins, $group_keys, $having_condition, false);
+		$db = static::select($where_condition, $order_key_direction, $limit, $offset, $joins, $group_keys, $having_condition);
 
 		while (($record = $db->nextRecord())) {
 			$classname = static::class;
-			$model = new $classname(0, $record);
+			$model = new $classname();
+			$model->initialize($record);
 			$models[] = $model;
 		}
 
@@ -1658,9 +1675,11 @@ class ModelBase extends ClassBase {
 	 * @param SqlJoin[] $joins
 	 * @param static|null $model_object Falls ein Objekt übergeben wird, dann wird das übergebene Objekt ebenfalls mit den ermittelten Objektdaten initialisiert. WICHTIG: Dieses Objekt wird keiner Typ-Prüfung unterzogen und vorher auch nicht resetted - das muss zuvor manuell durchgeführt werden!
 	 *
-	 * @return static|null
 	 * @see ModelBase::select
 	 *
+	 * @return static|null
+	 *
+	 * @noinspection PhpDocMissingThrowsInspection
 	 */
 	final public static function readSingle($where_condition = null, $order_key_direction = array(), $joins = array(), ?ModelBase &$model_object = null) {
 
@@ -1669,7 +1688,7 @@ class ModelBase extends ClassBase {
 			$model_object = new $class_name();
 		}
 
-		$db = static::select($where_condition, $order_key_direction, 1, 0, $joins, array(), null, false);
+		$db = static::select($where_condition, $order_key_direction, 1, 0, $joins);
 
 		if (($record = $db->nextRecord())) {
 			$model_object->initialize($record);
@@ -1744,11 +1763,13 @@ class ModelBase extends ClassBase {
 	/**
 	 * Gibt alle Objekte zurück, die exakt dieselben (Tabellen-)Werte, wie das gg.wärtige Objekt haben.
 	 *
-	 * Per Default werden @param string[] $ignore_fields Die Bezeichner der zu ignorierenden Felder
+	 * Per Default werden {@see ModelBase::ID, ModelBase::CREATED, ModelBase::UPDATED} ignoriert.
+	 *
+	 * @param string[] $ignore_fields Die Bezeichner der zu ignorierenden Felder
 	 *
 	 * @return static[]
-	 * @see ModelBase::ID, ModelBase::CREATED, ModelBase::UPDATED ignoriert.
 	 *
+	 * @noinspection PhpDocMissingThrowsInspection
 	 */
 	final public function readSame($ignore_fields = array()) {
 
@@ -1814,6 +1835,8 @@ class ModelBase extends ClassBase {
 	 * Setzt das Objekt auf die Default-Werte eines frisch konstruierten Objekts zurück
 	 *
 	 * @param string[] $skip_property_keys Property-Keys, deren Werte nicht zurückgesetzt werden sollen
+	 *
+	 * @throws PropertyException
 	 */
 	final public function reset($skip_property_keys = array()) {
 
@@ -1868,6 +1891,8 @@ class ModelBase extends ClassBase {
 	 * @param bool $skip_reset
 	 *
 	 * @return bool TRUE, wenn ein passender Datensatz in der Tabelle gefunden wurde
+	 *
+	 * @throws PropertyException
 	 */
 	final public function read($primary_tuple = array(), bool $skip_reset = false): bool {
 
@@ -1916,7 +1941,7 @@ class ModelBase extends ClassBase {
 			foreach ($primary_keys as $primary_key) {
 				$this->internalSet($primary_key, null);
 			}
-		} catch (PropertyException $ex) {
+		} catch (PropertyException) {
 		}
 
 		$this->initialFieldValues = array(); // Das Array mit den zuvor hinterlegten Initialwerten auch leeren
@@ -1969,7 +1994,7 @@ class ModelBase extends ClassBase {
 	 *
 	 * @param bool $skip_read_after_insert Wenn TRUE, wird das Neu-Einlesen des Objekts nach einem INSERT nicht durchgeführt
 	 *
-	 * @throws MissingPrimaryKeyException|PDOException|WriteException
+	 * @throws MissingPrimaryKeyException|PDOException|WriteException|PropertyException
 	 */
 	public function write(bool $skip_read_after_insert = false) {
 
