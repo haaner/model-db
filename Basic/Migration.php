@@ -12,7 +12,7 @@ use Exception;
 class Migration extends ModelBase {
 	const FILE_NAME = 'fileName';
 
-	const MIGRATIONS_DIR = Env::PROJECT_PATH . 'src/migrations/';
+	const MIGRATIONS_DIR = Env::PROJECT_PATH . 'migrations/';
 
 	/**
 	 * Ermittelt die SQL-Dateien innerhalb des Migration-Verzeichnisses, die noch nicht eingespielt wurden.
