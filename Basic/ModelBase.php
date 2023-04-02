@@ -300,7 +300,7 @@ class ModelBase extends ClassBase {
 			if (is_object($value)) {
 				$prop_val = clone $value;
 			} else {
-				$prop_val = intval($value);
+				$prop_val = $value;
 			}
 
 		} elseif ($type == self::PROPERTY_TYPE_JSON) {
@@ -904,10 +904,6 @@ class ModelBase extends ClassBase {
 
 					if (is_object($value)) {
 						$value = $value->id;
-					}
-
-					if ($value !== null) {
-						$value = sprintf('%d', $value);
 					}
 
 				} elseif ($property_type == self::PROPERTY_TYPE_JSON) {
