@@ -177,6 +177,8 @@ class ModelTableInfos {
 		}
 
 		fclose($fp);
+
+		chmod($this->cacheFilePath, 0664);
 		umask($old);
 	}
 
