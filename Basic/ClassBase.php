@@ -2,6 +2,7 @@
 
 namespace BirdWorX\ModelDb\Basic;
 
+use BirdWorX\Utils;
 use ReflectionClass;
 use ReflectionException;
 
@@ -63,5 +64,9 @@ class ClassBase {
 		} catch (ReflectionException) {
 			return false;
 		}
+	}
+
+	public function toArray($ignore_keys = array()) {
+		return Utils::object2Array($this, $ignore_keys, false);
 	}
 }
