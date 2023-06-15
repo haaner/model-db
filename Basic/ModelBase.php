@@ -990,25 +990,6 @@ class ModelBase extends ClassBase {
 	}
 
 	/**
-	 * Kopiert das Objekt und gibt es zurück. Eine Speicherung in der Datenbank wird nicht durchgeführt - diese muss durch einen separaten write()-Aufruf erfolgen
-	 *
-	 * @return static
-	 */
-	public function copy() {
-
-		$key_values = $this->getPropertyStrings();
-
-		unset($key_values[self::CREATED]);
-		unset($key_values[self::UPDATED]);
-
-		$model_class = static::class;
-		$model = new $model_class(0, $key_values);
-		$model->unsetPrimaryKeyValues();
-
-		return $model;
-	}
-
-	/**
 	 * Erstellt ein ModelBase-Objekt mittels der übergebenen Daten.
 	 *
 	 * @param array $model_data
@@ -1025,6 +1006,24 @@ class ModelBase extends ClassBase {
 			} catch (PropertyException) {
 			}
 		}
+
+		return $model;
+	}
+
+	/**
+	 * Kopiert das Objekt und gibt es zurück. Eine Speicherung in der Datenbank wird nicht durchgeführt - diese muss durch einen separaten write()-Aufruf erfolgen
+	 *
+	 * @return static
+	 */
+	public function copy() {
+
+		$key_values = $this->getPropertyStrings();
+
+		unset($key_values[self::CREATED]);
+		unset($key_values[self::UPDATED]);
+
+		$model = static::createObject($key_values);
+		$model->unsetPrimaryKeyValues();
 
 		return $model;
 	}
