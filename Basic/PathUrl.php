@@ -64,11 +64,11 @@ class PathUrl {
 	 * @return string
 	 */
 	private function determineAbsoluteUrl(): string {
-
+/*
 		if (preg_match('#^' . Env::getPublicPath(), $this->absoluteUrl) === false) {
 			die('path is not underneath public dir - special handling needed!');
 		}
-
+*/
 		// Default-Handling für absolute-URLs
 		return Env::getBaseUrl() . $this->relativePath;
 	}
