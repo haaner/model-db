@@ -337,7 +337,9 @@ class ModelBase extends ClassBase {
 		$this->initPropertyDefaults();
 
 		if (($id = trim(strval($id))) !== '') {
-			$this->read([static::ID => $id], true);
+			if (!$this->read([ static::ID => $id ], true)) {
+				$this->initialize([ static::ID => $id ]);
+			}
 		} else {
 			$this->initialize();
 		}
