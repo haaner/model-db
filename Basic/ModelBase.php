@@ -338,7 +338,8 @@ class ModelBase extends ClassBase {
 
 		if (($id = trim(strval($id))) !== '') {
 			if (!$this->read([ static::ID => $id ], true)) {
-				$this->initialize([ static::ID => $id ]);
+				$this->initialize([ static::ID => null ]);
+ 				$this->id = $id;
 			}
 		} else {
 			$this->initialize();
