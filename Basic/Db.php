@@ -95,7 +95,7 @@ class Db {
 		} catch (PDOException $ex) {
 			$code = intval($ex->getCode());
 
-			if ($code === 1040 /* Too many connections*/ || $code === 2002 /* Connection timed out */) {
+			if ($code === 1044 /* Access denied */ || $code === 1040 /* Too many connections*/ || $code === 2002 /* Connection timed out */) {
 				throw $ex;
 			}
 		}
@@ -160,7 +160,7 @@ class Db {
 	}
 
 	public static function tableExists(string $table_name) {
-		return self::$atomicInstance->queryValue("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_NAME = '". $table_name . "'") === $table_name;
+		return self::$atomicInstance->queryValue("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_NAME = '". $table_name . "' AND TABLE_SCHEMA = '". self::$dbName ."'") === $table_name;
 	}
 
 	/**
@@ -183,6 +183,13 @@ class Db {
 	 */
 	public static function execute($query): void {
 		Db::$atomicInstance->query($query);
+	}
+
+	public static function createFresh(): void {
+		self::execute('DROP DATABASE ' . self::$dbName);
+		self::execute('CREATE DATABASE ' . self::$dbName);
+
+		self::init();
 	}
 
 	/**
