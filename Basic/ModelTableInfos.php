@@ -2,6 +2,7 @@
 
 namespace BirdWorX\ModelDb\Basic;
 
+use BirdWorX\Env;
 use PDOException;
 use ReflectionClass;
 use ReflectionException;
@@ -178,10 +179,10 @@ class ModelTableInfos {
 
 		fclose($fp);
 
-		if (\BirdWorX\Env::isCmdLineCall()) {
-			chmod($this->cacheFilePath, 0666);
+		if (Env::isCmdLineCall()) {
+			@chmod($this->cacheFilePath, 0666);
 		} else {
-			chmod($this->cacheFilePath, 0664);
+			@chmod($this->cacheFilePath, 0664);
 		}
 
 		umask($old);
