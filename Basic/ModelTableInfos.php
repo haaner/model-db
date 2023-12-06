@@ -178,7 +178,12 @@ class ModelTableInfos {
 
 		fclose($fp);
 
-		chmod($this->cacheFilePath, 0664);
+		if (\BirdWorX\Env::isCmdLineCall()) {
+			chmod($this->cacheFilePath, 0666);
+		} else {
+			chmod($this->cacheFilePath, 0664);
+		}
+
 		umask($old);
 	}
 
