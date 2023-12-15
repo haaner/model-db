@@ -178,12 +178,7 @@ class ModelTableInfos {
 		}
 
 		fclose($fp);
-
-		if (Env::isCmdLineCall()) {
-			@chmod($this->cacheFilePath, 0666);
-		} else {
-			@chmod($this->cacheFilePath, 0664);
-		}
+		@chmod($this->cacheFilePath, 0664);
 
 		umask($old);
 	}
