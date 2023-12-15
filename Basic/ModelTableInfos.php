@@ -2,7 +2,6 @@
 
 namespace BirdWorX\ModelDb\Basic;
 
-use BirdWorX\Env;
 use PDOException;
 use ReflectionClass;
 use ReflectionException;
