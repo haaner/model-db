@@ -124,7 +124,7 @@ class Migration extends ModelBase {
 		return null;
 	}
 
-	public static function execute($fresh_database = false) {
+	public static function execute($fresh_database = false, $use_exit_call = false) {
 		Env::init();
 
 		if ($fresh_database) {
@@ -135,7 +135,11 @@ class Migration extends ModelBase {
 
 		if (($error = Migration::importFiles($executed_queries)) === null) {
 			echo "SQL-Migration wurden erfolgreich ausgeführt :)\n";
-			exit(0);
+
+			if ($use_exit_call) {
+				exit(0);
+			}
+
 		} else {
 			echo "Probleme bei SQL-Migrationen!\n\n";
 
@@ -144,7 +148,10 @@ class Migration extends ModelBase {
 			$missing_files = Migration::filesToBeImported();
 			echo "\n\nNoch einzuspielende Datei(en):\n\n";
 			print_r($missing_files);
-			exit(1);
+
+			if ($use_exit_call) {
+				exit(1);
+			}
 		}
 	}
 }
