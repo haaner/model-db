@@ -444,7 +444,9 @@ class ModelBase extends ClassBase {
 
 			if ($foreign_key_as_model && !is_object($property_reference)) {
 				$model_class = $this->getForeignClassOrTable($property_key);
-				$property_reference = new $model_class($property_reference);
+
+				/** @var ModelBase $model_class */
+				$property_reference = $model_class::readSingle([ ModelBase::ID => $property_reference]);
 			} else {
 				$property_reference = &$this->fieldValues[$property_key];
 			}
