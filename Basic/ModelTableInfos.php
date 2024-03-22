@@ -353,7 +353,11 @@ class ModelTableInfos {
 					if (is_subclass_of($foreign_class_name, ModelBase::class) && ($foreign_class_name)::getTableName() === $foreign_key_class_or_table[$field]) {
 						$foreign_key_class_or_table[$field] = $foreign_class_name;
 						$type = ModelBase::PROPERTY_TYPE_FOREIGN_KEY;
-				} else {
+					}
+
+				} while (($current_class_name = get_parent_class($current_class_name)));
+
+				if ($type === null) {
 					unset($foreign_key_class_or_table[$field]);
 					$type = ModelBase::PROPERTY_TYPE_INT;
 				}
