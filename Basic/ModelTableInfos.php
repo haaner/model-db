@@ -86,6 +86,8 @@ class ModelTableInfos {
 	 */
 	private array $primaryKeyList;
 
+	private array $uniqueTuplesList;
+
 	/**
 	 * Enthält den Bezeichner der AUTO_INCREMENT-Spalte der abgebildeten Tabellen
 	 *
