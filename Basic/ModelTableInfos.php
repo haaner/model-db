@@ -233,7 +233,7 @@ class ModelTableInfos {
 
 			foreach ($props as $prop) {
 				if (!$prop->isStatic() && !array_key_exists(($prop_name = $prop->getName()), $reflected_properties)) {
-					$reflected_properties[$prop->getName()] = ModelBase::getTypeForAnnotation($prop->getDocComment());
+					$reflected_properties[$prop_name] = ModelBase::getTypeForAnnotation($prop->getDocComment());
 				}
 			}
 
@@ -341,8 +341,8 @@ class ModelTableInfos {
 
 				do {
 					$class_comment = $this->getClassComment($current_class_name, $reflected_properties);
+					$foreign_class_name = ModelBase::getAnnotationTypeAsString($class_comment, $field);
 
-					$foreign_class_name = \Type\getAnnotationTypeAsString($class_comment, $field);
 					// Das Foreign-Key Handling macht nur dann Sinn, wenn die beteiligte Tabelle einer anderen ModelBase-Klasse entspricht
 
 					// Foreign-Klassen (deren Type-Hint keinen Namespace enthält) müssen im Models-Namespace sein
