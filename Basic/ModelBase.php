@@ -800,6 +800,11 @@ class ModelBase extends ClassBase {
 		return self::$modelTableInfos->getPrimaryKeyList(static::class);
 	}
 
+	public static function getUniqueTuplesList() {
+		static::initModelTableInfos();
+		return self::$modelTableInfos->getUniqueTuplesList(static::class);
+	}
+
 	private static function getReflectedProperties() {
 		static::initModelTableInfos();
 		return self::$modelTableInfos->getReflectedProperties(static::class);

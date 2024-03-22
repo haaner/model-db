@@ -105,6 +105,7 @@ class ModelTableInfos {
 		$this->reflectedProperties = array();
 		$this->fieldEnumValues = array();
 		$this->primaryKeyList = array();
+		$this->uniqueTuplesList = array();
 		$this->autoincrementField = array();
 	}
 
@@ -225,6 +226,30 @@ class ModelTableInfos {
 		return $props;
 	}
 
+	private function getClassComment($class_name, array &$reflected_properties) {
+
+		try {
+			$props = self::getClassProperties($class_name);
+
+			foreach ($props as $prop) {
+				if (!$prop->isStatic() && !array_key_exists(($prop_name = $prop->getName()), $reflected_properties)) {
+					$reflected_properties[$prop_name] = \Type\getTypeForAnnotation($prop->getDocComment());
+				}
+			}
+
+			$reflect = new ReflectionClass($class_name);
+
+			if (($class_comment = $reflect->getDocComment()) === false) {
+				$class_comment = '';
+			}
+
+		} catch (ReflectionException) {
+			$class_comment = '';
+		}
+
+		return $class_comment;
+	}
+
 	/**
 	 * Erweitert das Objekt mit Meta-Daten für das spezifizierte Tabelle-Klasse Paar.
 	 *
@@ -242,6 +267,7 @@ class ModelTableInfos {
 		$this->reflectedProperties[$class_name] = array();
 		$this->fieldEnumValues[$class_name] = array();
 		$this->primaryKeyList[$class_name] = array();
+		$this->uniqueTuplesList[$class_name] = array();
 		$this->autoincrementField[$class_name] = null;
 
 		$table_fields = &$this->tableFields[$class_name];
@@ -306,46 +332,34 @@ class ModelTableInfos {
 		// Sämtliche (nicht-statischen) Properties der Klasse ermitteln
 		$reflected_properties = &$this->reflectedProperties[$class_name];
 
-		try {
-			$props = self::getClassProperties($class_name);
-
-			foreach ($props as $prop) {
-				if (!$prop->isStatic()) {
-					$reflected_properties[$prop->getName()] = ModelBase::getTypeForAnnotation($prop->getDocComment());
-				}
-			}
-
-			$reflect = new ReflectionClass($class_name);
-
-			if (($class_comment = $reflect->getDocComment()) === false) {
-				$class_comment = '';
-			}
-
-		} catch (ReflectionException) {
-			$class_comment = '';
-		}
-
 		$fields = array_keys($table_fields);
 		foreach ($fields as $field) {
 
 			if (array_key_exists($field, $foreign_key_class_or_table)) {
-				$foreign_class_name = ModelBase::getAnnotationTypeAsString($class_comment, $field);
-				// Das Foreign-Key Handling macht nur dann Sinn, wenn die beteiligte Tabelle einer anderen ModelBase-Klasse entspricht
+				$type = null;
+				$current_class_name = $class_name;
 
-				// Foreign-Klassen (deren Type-Hint keinen Namespace enthält) müssen im Models-Namespace sein
-				if (!str_contains($foreign_class_name, '\\')) {
-					$foreign_class_name = PROJECT_NAME . '\\Models\\' . $foreign_class_name;
-				}
+				do {
+					$class_comment = $this->getClassComment($current_class_name, $reflected_properties);
 
-				if (is_subclass_of($foreign_class_name, ModelBase::class) && ($foreign_class_name)::getTableName() === $foreign_key_class_or_table[$field]) {
-					$foreign_key_class_or_table[$field] = $foreign_class_name;
-					$type = ModelBase::PROPERTY_TYPE_FOREIGN_KEY;
+					$foreign_class_name = \Type\getAnnotationTypeAsString($class_comment, $field);
+					// Das Foreign-Key Handling macht nur dann Sinn, wenn die beteiligte Tabelle einer anderen ModelBase-Klasse entspricht
+
+					// Foreign-Klassen (deren Type-Hint keinen Namespace enthält) müssen im Models-Namespace sein
+					if (!str_contains($foreign_class_name, '\\')) {
+						$foreign_class_name = PROJECT_NAME . '\\Models\\' . $foreign_class_name;
+					}
+
+					if (is_subclass_of($foreign_class_name, ModelBase::class) && ($foreign_class_name)::getTableName() === $foreign_key_class_or_table[$field]) {
+						$foreign_key_class_or_table[$field] = $foreign_class_name;
+						$type = ModelBase::PROPERTY_TYPE_FOREIGN_KEY;
 				} else {
 					unset($foreign_key_class_or_table[$field]);
 					$type = ModelBase::PROPERTY_TYPE_INT;
 				}
 
 			} else {
+				$class_comment = $this->getClassComment($class_name, $reflected_properties);
 
 				if (preg_match('/^tinyint\(1\)/', $table_fields[$field])) {
 					// Da MySql BOOL(EAN) intern als TINYINT(1) verwaltet, prüfe nochmal explizit die @var / @property Annotation
@@ -380,6 +394,17 @@ class ModelTableInfos {
 			$primary_key_list[] = $record['COLUMN_NAME'];
 		}
 
+		$unique_tuples_list = &$this->uniqueTuplesList[$class_name];
+
+		$db->query("SHOW INDEX FROM " . $table_name . " WHERE Non_unique = 0 AND Key_name != 'PRIMARY'");
+		while (($record = $db->nextRecord())) {
+			if (!array_key_exists(($key_name = $record['Key_name']), $unique_tuples_list)) {
+				$unique_tuples_list[$key_name] = array();
+			}
+
+			$unique_tuples_list[$key_name][] = $record['Column_name'];
+		}
+
 		$this->save();
 	}
 
@@ -393,6 +418,7 @@ class ModelTableInfos {
 		$this->reflectedProperties = array_merge($this->reflectedProperties, $model_meta->reflectedProperties);
 		$this->fieldEnumValues = array_merge($this->fieldEnumValues, $model_meta->fieldEnumValues);
 		$this->primaryKeyList = array_merge($this->primaryKeyList, $model_meta->primaryKeyList);
+		$this->uniqueTuplesList = array_merge($this->uniqueTuplesList, $model_meta->uniqueTuplesList);
 		$this->autoincrementField = array_merge($this->autoincrementField, $model_meta->autoincrementField);
 	}
 
@@ -426,6 +452,10 @@ class ModelTableInfos {
 
 	public function getPrimaryKeyList(string $class_name): array {
 		return $this->primaryKeyList[$class_name];
+	}
+
+	public function getUniqueTuplesList(string $class_name): array {
+		return $this->uniqueTuplesList[$class_name];
 	}
 
 	public function getAutoincrementField(string $class_name): ?string {
