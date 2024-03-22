@@ -233,7 +233,7 @@ class ModelTableInfos {
 
 			foreach ($props as $prop) {
 				if (!$prop->isStatic() && !array_key_exists(($prop_name = $prop->getName()), $reflected_properties)) {
-					$reflected_properties[$prop_name] = \Type\getTypeForAnnotation($prop->getDocComment());
+					$reflected_properties[$prop->getName()] = ModelBase::getTypeForAnnotation($prop->getDocComment());
 				}
 			}
 
