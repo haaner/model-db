@@ -228,7 +228,7 @@ class ModelTableInfos {
 		return $props;
 	}
 
-	private function getClassComment($class_name, array &$reflected_properties) {
+	private function getClassCommentAndFillReflectedProperties($class_name, array &$reflected_properties) {
 
 		try {
 			$props = self::getClassProperties($class_name);
@@ -335,6 +335,11 @@ class ModelTableInfos {
 		$reflected_properties = &$this->reflectedProperties[$class_name];
 
 		$fields = array_keys($table_fields);
+
+		if (!count($fields)) {
+			$this->getClassCommentAndFillReflectedProperties($class_name, $reflected_properties);
+		}
+
 		foreach ($fields as $field) {
 
 			if (array_key_exists($field, $foreign_key_class_or_table)) {
@@ -342,7 +347,7 @@ class ModelTableInfos {
 				$current_class_name = $class_name;
 
 				do {
-					$class_comment = $this->getClassComment($current_class_name, $reflected_properties);
+					$class_comment = $this->getClassCommentAndFillReflectedProperties($current_class_name, $reflected_properties);
 					$foreign_class_name = ModelBase::getAnnotationTypeAsString($class_comment, $field);
 
 					// Das Foreign-Key Handling macht nur dann Sinn, wenn die beteiligte Tabelle einer anderen ModelBase-Klasse entspricht
@@ -365,7 +370,7 @@ class ModelTableInfos {
 				}
 
 			} else {
-				$class_comment = $this->getClassComment($class_name, $reflected_properties);
+				$class_comment = $this->getClassCommentAndFillReflectedProperties($class_name, $reflected_properties);
 
 				if (preg_match('/^tinyint\(1\)/', $table_fields[$field])) {
 					// Da MySql BOOL(EAN) intern als TINYINT(1) verwaltet, prüfe nochmal explizit die @var / @property Annotation
