@@ -145,18 +145,21 @@ class ModelBase extends ClassBase {
 	public static function getAnnotationTypeAsString($annotation, $property_name = null) {
 
 		if ($property_name) {
-
-			if (preg_match('/@(property|param)[ \t]+(.+)[ \t]+\$?' . $property_name . '[ \t\n]+/', $annotation, $matches)) {
+			if (preg_match('/@(property|param)[ \t]+(.+)[ \t]+\$?' . $property_name . '[ \t\r\n]+/', $annotation, $matches)) {
 				$annotation = $matches[2];
 			} else {
 				$annotation = '';
 			}
+
 		} else {
-			$annotation = preg_replace('/(\n|.)*@var[ \t]+/', '', $annotation);
-			$annotation = preg_replace('/[ \t\n]+(\n|.)*/', '', $annotation);
+			if (preg_match('/@var[ \t]+(.+)[ \t\r\n]+/', $annotation, $matches)) {
+				$annotation = $matches[1];
+			} else {
+				$annotation = '';
+			}
 		}
 
-		return $annotation;
+		return ltrim($annotation, '?');
 	}
 
 	/**
