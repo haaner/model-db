@@ -1,5 +1,12 @@
 {
     "name": "birdworx/model-db",
+    "description": "A PHP library, which maps MySQL tables in a simple manner on corresponding PHP models.",
+    "license": [
+        "GPL-3.0-or-later"
+    ],
+    "require": {
+	"php": ">=8.2"
+    },
     "autoload": {
         "psr-4": {
             "BirdWorX\\ModelDb\\": "."
